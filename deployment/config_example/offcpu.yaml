@@ -1,0 +1,29 @@
+exporter:
+  influxdb:
+    - name: influx
+      host: http://192.168.199.123:8086
+
+collector:
+  offcpu:
+    - name: off_cpu_time
+      # ~1: time_hist
+      # 2 : time_hist, kernel_stack
+      # 3~: time_hist, kernel_stack, user_stack,
+      verbose: 2
+      # filter on state bitmask (eg, 2 == TASK_UNINTERRUPTIBLE")
+      # see include/linux/sched.h"
+      state: 3
+      # filter on time, only record event with time(us) in (time_start, time_end)
+      time_start: 1
+      time_end: 10000
+
+      listen:
+        pid:
+          - 19286
+
+      export:
+        period: 1000
+        data_name: offcpu
+        exporter:
+          - name: influx
+            database: metrics

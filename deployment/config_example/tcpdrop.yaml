@@ -1,0 +1,25 @@
+exporter:
+  influxdb:
+    - name: influx
+      host: http://192.168.199.123:8086
+
+collector:
+  tcpdrop:
+    - name: tcp_drop
+      # ~1: drop_event
+      # 2 : drop_event, user_stack
+      # 3~: drop_event, user_stack, kernel_stack
+      verbose: 3
+
+      listen:
+        # regular expression to filter container
+        # with format:[namespace]/[container name]
+        k8s:
+          - ".+/*"
+
+      export:
+        period: 1000
+        data_name: tcpdrop
+        exporter:
+          - name: influx
+            database: metrics

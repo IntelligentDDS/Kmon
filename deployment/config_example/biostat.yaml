@@ -1,0 +1,23 @@
+exporter:
+  influxdb:
+    - name: influx
+      host: http://192.168.199.123:8086
+
+collector:
+  biostat:
+    - name: block_io_state
+      # ~1: total_IO_byte, total_latency
+      # 2~: total_IO_byte, total_latency, IO_latency_hist
+      verbose: 2
+      bin_scale: 1000 # bin_id = [log2(latency(ns)/bin_scale)]
+
+      listen:
+        pid:
+          - 385
+
+      export:
+        period: 1000
+        data_name: biostat
+        exporter:
+          - name: influx
+            database: metrics

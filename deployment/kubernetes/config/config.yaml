@@ -1,0 +1,110 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ebpf-config
+data:
+  config.yaml: |
+    exporter:
+      influxdb:
+        - name: influx
+          host: http://192.168.199.123:8086
+
+    collector:
+      biostat:
+        - name: block_io_state
+          # ~1: total_IO_byte, total_latency
+          # 2~: total_IO_byte, total_latency, IO_latency_hist
+          verbose: 2
+          bin_scale: 1000 # bin_id = [log2(latency(ns)/bin_scale)]
+
+          listen:
+            k8s:
+              - hipster/*
+
+          export:
+            period: 1000
+            data_name: biostat
+            exporter:
+              - name: influx
+                database: metrics
+
+      fcount:
+        - name: write_counter
+          function: __x64_sys_write
+          count_return: false
+
+          listen:
+            # regular expression to filter container
+            # with format:[namespace]/[container name]
+            k8s:
+              - hipster/*
+
+          export:
+            period: 1000
+            data_name: fcount
+            exporter:
+              - name: influx
+                database: metrics
+
+      offcpu:
+        - name: off_cpu_time
+          # ~1: time_hist
+          # 2 : time_hist, kernel_stack
+          # 3~: time_hist, kernel_stack, user_stack,
+          verbose: 2
+          # filter on state bitmask (eg, 2 == TASK_UNINTERRUPTIBLE")
+          # see include/linux/sched.h"
+          state: 3
+          # filter on time, only record event with time(us) in (time_start, time_end)
+          time_start: 1
+          time_end: 10000
+
+          listen:
+            k8s:
+              - hipster/*
+
+          export:
+            period: 1000
+            data_name: offcpu
+            exporter:
+              - name: influx
+                database: metrics
+
+      tcpdrop:
+        - name: tcp_drop
+          # ~1: drop_event
+          # 2 : drop_event, user_stack
+          # 3~: drop_event, user_stack, kernel_stack
+          verbose: 3
+
+          listen:
+            # regular expression to filter container
+            # with format:[namespace]/[container name]
+            k8s:
+              - hipster/*
+
+          export:
+            period: 1000
+            data_name: tcpdrop
+            exporter:
+              - name: influx
+                database: metrics
+
+      tcpreq:
+        - name: tcp_request
+          # ~1: accept, close
+          # 2~: accept, send, recv, close
+          verbose: 2
+
+          listen:
+            # regular expression to filter container
+            # with format:[namespace]/[container name]
+            k8s:
+              - hipster/*
+
+          export:
+            period: 1000
+            data_name: tcpreq
+            exporter:
+              - name: influx
+                database: metrics
